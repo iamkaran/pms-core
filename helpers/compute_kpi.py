@@ -119,32 +119,6 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
         
         prod_delta = max(0, curProd - baseProd)
         
-        
-        
-        bad_total_attr = attributes.get("bad_qty_pcs", 0)
-        bad_total_attr = max(0, bad_total_attr)
-        good_total = max(0, prod_delta - bad_total_attr)
-        quality = round(good_total / prod_delta * 100, 2)
-        
-        updated_attributes["bad_qty_pcs"] = bad_total_attr
-        updated_telemetry["bad_qty_pcs"] = bad_total_attr
-        updated_telemetry["good_qty_pcs"] = good_total
-        updated_telemetry["oee_quality"] = quality
-        
-        # bad_qty = min(bad_total, prod_delta)
-        # good_qty = max(0, prod_delta - bad_qty)
-
-        # updated_telemetry["good_qty_pcs"] = good_qty
-        # updated_telemetry["bad_qty_pcs"] = bad_qty
-
-        # if prod_delta > 0:
-        #     quality = good_qty / prod_delta
-        # else:
-        #     quality = 0.0
-
-        # updated_telemetry["oee_quality_pct"] = round(quality * 100, 2)
-
-        
         for i in range(1, CHANNEL_COUNT+1):
             actOcc[f"act_occ_{i}"] = max(0, curOcc[str(i)] - baseOcc[str(i)])
             actDur[f"act_duration_s_{i}"] = max(0, curDur[str(i)] - baseDur[str(i)])
@@ -173,6 +147,23 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
             updated_telemetry["achieved_pct"] = 0
         
         updated_telemetry["active_status"] = telemetry["active_status"]
+        
+        # <------------- ADD-ONS ------------->
+        
+        
+        # 1. OEE Calculations
+        
+        bad_total_attr = attributes.get("bad_qty_pcs", 0)
+        bad_total_attr = max(0, bad_total_attr)
+        good_total = max(0, prod_delta - bad_total_attr)
+        quality = round(good_total / prod_delta * 100, 2)
+        
+        updated_attributes["bad_qty_pcs"] = bad_total_attr
+        updated_telemetry["bad_qty_pcs"] = bad_total_attr
+        updated_telemetry["good_qty_pcs"] = good_total
+        updated_telemetry["oee_quality"] = quality
+        
+        # <------------- ADD-ONS ------------->
         
         log.debug(f"Updated telemetry{updated_telemetry}")
         log.debug(f"{curOcc}")

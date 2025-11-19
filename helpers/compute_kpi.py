@@ -150,7 +150,6 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
         
         # <------------- ADD-ONS ------------->
         
-        
         # 1. OEE Calculations
         
         bad_total_attr = attributes.get("bad_qty_pcs", 0)

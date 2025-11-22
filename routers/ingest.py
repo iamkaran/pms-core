@@ -15,7 +15,7 @@ router = APIRouter()
 @router.post("/api/telemetry/{ACCESS_TOKEN}/{DEVICE_UUID}")
 async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dict:
     """Main Process that handles every tick."""
-    start = time.time()
+    start = time.time() 
 
     # Optional: grab machine name for logging
     if isinstance(telemetry, dict) and telemetry:
@@ -30,8 +30,7 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
         log.error(f"Error flattening dictionary: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-    
-    readable = datetime.fromtimestamp(telemetry["timestamp"]).strftime("%b %d, %Y %I:%M:%S %p")
+    readable = datetime.fromtimestamp(telemetry.get("timestamp")).strftime("%b %d, %Y %I:%M:%S %p") if telemetry.get("timestamp") is not None else 0
     log.info(f"Timestamp: {readable}")
     # Find related asset for jobcard logic
     asset_list = await find_related_entity(DEVICE_UUID)
@@ -55,6 +54,9 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
                             telemetry=telemetry,
                             attributes=attr,
                         )
+                        timestamp = telemetry.get(f"timestamp")
+                        updated_telemetry["timestamp"] = timestamp if timestamp is not None else time.time()
+                        log.info(updated_telemetry)
                         await send_jobcard_updates(
                             asset_id=asset_id,
                             attrs=updated_attributes,
@@ -67,25 +69,22 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
                                 attrs={"job_status":job_status},
                                 tel= None
                             )
-                        else:
-                            continue
                         
                 except Exception:
                     # You can tighten this later with specific exceptions
                     log.exception("Jobcard processing failed for asset %s", asset_id)
 
     # Always send telemetry upstream
-    log.info("Posting Telemetry...")
     try:
+        log.info("Posting Telemetry...")
         await post_telemetry(telemetry=telemetry, access_token=ACCESS_TOKEN)
-        log.info("<------ Telemetry sent successfully ------>")
+        
     except TelemetrySendError as e:
         log.error("Telemetry sending failed: %s", e)
         raise HTTPException(status_code=502, detail=str(e))
 
     elapsed = round(time.time() - start, 2)
     log.info(f"elapsed time: {elapsed}s")
-
     return {"success": True}
 
 def flatten_dict(data):

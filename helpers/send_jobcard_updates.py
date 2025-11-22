@@ -19,13 +19,13 @@ async def send_jobcard_updates(asset_id: str, attrs: dict, tel: dict):
         ))
         
     if tel:
-        ts_ms = int(tel.get("timestamp") or time.time() * 1000)
+        ts_ms = int(tel.get("timestamp") * 1000 or time.time() * 1000)
         
-        values = {k: v for k, v in tel.items() if k != "timestamp_ms"} # to exclude the duplicate timestamp
+        # values = {k: v for k, v in tel.items() if k != "timestamp_ms"} # to exclude the duplicate timestamp
         
         body = {
             "ts":ts_ms,
-            "values":values
+            "values":tel
         }
         
         tasks.append(tb_post(

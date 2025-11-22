@@ -33,6 +33,7 @@ async def post_telemetry(telemetry: dict, access_token: str) -> None:
     try:
         response = await client.post(url=url, json=payload)
         response.raise_for_status()
+        log.info("<------ Telemetry sent successfully ------>")
     except httpx.HTTPStatusError as e:
         log.error(
             "ThingsBoard HTTP error %s: %s",

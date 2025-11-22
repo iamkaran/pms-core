@@ -16,7 +16,7 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
     for key in telemetry:
         if "OCCURRENCE-" in key:
             CHANNEL_COUNT += 1
-    # log.debug(f"Channel count: {CHANNEL_COUNT}")
+    log.debug(f"Channel count: {CHANNEL_COUNT}")
     
     # Read the current counters
     

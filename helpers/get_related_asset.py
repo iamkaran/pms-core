@@ -31,7 +31,7 @@ async def find_related_entity(device_id: str):
             RelationFilter(
                 relationType=os.getenv("DEVICE_TO_ASSET_RELATION"),
                 entityTypes=[EntityType.ASSET],
-                negate=True
+                negate=False
             )
         ]
     )

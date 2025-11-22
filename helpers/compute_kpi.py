@@ -60,7 +60,7 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
     need_snapshot = (baseline_snapshot_ts is None or (baseline_start_ts is not None and baseline_start_ts != start_ms))
     
     
-    # <--Snapshot Mode-->
+    # <--Snapshot Mode For Activation-->
     
     if need_snapshot:
         

@@ -26,7 +26,6 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
     # Normalize the incoming data
     try:
         telemetry = flatten_dict(telemetry)
-        log.info(telemetry)
     except ValueError as e:
         log.error(f"Error flattening dictionary: {e}")
         raise HTTPException(status_code=400, detail=str(e))

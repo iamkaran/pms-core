@@ -1,7 +1,6 @@
 import math
 from typing import Any, Mapping
 from services.logger import logger as log
-from helpers.job_card_attr import get_jobcard_attrs
 from models.tb_legacy_models import JobStatus
 
 def _to_num(x: Any, default: float) -> float:

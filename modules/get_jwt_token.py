@@ -2,7 +2,6 @@ import os
 import time
 from typing import Optional
 import jwt
-import asyncio
 from dotenv import load_dotenv
 from services.logger import logger as log
 from modules.http_client import get_http_client
@@ -13,7 +12,7 @@ load_dotenv()
 TB_BASE_URL = os.getenv("TB_URL")
 TB_USERNAME = os.getenv("TB_USERNAME")
 TB_PASSWORD = os.getenv("TB_PASSWORD")
-TB_JWT_SAFETY_DELAY = int(os.getenv("TB_JWT_SAFETY_DELAY")) | 30 # Ex: 30 seconds 
+TB_JWT_SAFETY_DELAY = int(os.getenv("TB_JWT_SAFETY_DELAY") or 30) # Ex: 30 seconds 
 
 # Cached variables
 __jwt_token: Optional[str] = None

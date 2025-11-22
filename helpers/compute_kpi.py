@@ -25,8 +25,8 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
     curDur: Dict[str, float] = {}
     
     for i in range(1, CHANNEL_COUNT+1):
-        curOcc[str(i)] = int(telemetry.get(f"OCCURRENCE-{i}"))
-        curDur[str(i)] = int(telemetry.get(f"DURATION-{i}"))
+        curOcc[str(i)] = int(telemetry.get(f"OCCURRENCE-{i}") or 0)
+        curDur[str(i)] = int(telemetry.get(f"DURATION-{i}") or 0)
     
     curOccTotal = sum(curOcc.values())
     curDurTotal = sum(curDur.values())
@@ -102,7 +102,7 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
         # <--ATTRIBUTES-->
         
         # Fetch the baselines
-        
+        updated_attributes["job_status"] = attributes.get("job_status", "unknown")
         baseOcc: Dict[str, Any] = {}
         baseDur: Dict[str, Any] = {}
         
@@ -116,7 +116,7 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
             baseDur[str(i)] = attributes.get(f"baseline_duration_s_{i}", 0)
         
         # Calculate the delta's
-        
+        log.debug(f"Prod total details:\n Current prod: {curProd}, Base prod: {baseProd}")
         prod_delta = max(0, curProd - baseProd)
         
         for i in range(1, CHANNEL_COUNT+1):
@@ -152,55 +152,85 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
 
         # 1. OEE Calculations
 
-        # bad_total_attr is assumed to be bad quantity for THIS job window or at least kept in sync externally
-        bad_total_attr = max(0, attributes.get("bad_qty_pcs", 0))
-
-        # Production delta for this job window is prod_delta (pcs)
-        # Good quantity for this window:
-        good_total = max(0, prod_delta - bad_total_attr)
+        bad_total_attr = max(0, attributes.get("bad_qty_pcs", 0))   # [pcs]
+        good_total = max(0, prod_delta - bad_total_attr)            # [pcs]
 
         # Ideal cycle time [s/part] (default 60 s/part if not configured)
         ideal_cycle_time = float(attributes.get("ideal_cycle_time", 60))
 
-        # QUALITY: ratio 0–1
+        # --- raw ratios (0–1, unrounded) ---
+
+        # QUALITY: 0–1
         if prod_delta > 0:
-            quality = good_total / prod_delta          # unitless
+            quality_raw = good_total / prod_delta
         else:
-            quality = 0.0
+            quality_raw = 0.0
 
-        # AVAILABILITY: ratio 0–1
-        total_time_s = uptime_s + downtime_s          # [s] = [s] + [s]
+        # AVAILABILITY: 0–1
+        total_time_s = uptime_s + downtime_s          # [s]
         if total_time_s > 0:
-            availability = uptime_s / total_time_s    # unitless
+            availability_raw = uptime_s / total_time_s
         else:
-            availability = 0.0
+            availability_raw = 0.0
 
-        # PERFORMANCE: ratio 0–1
-        # Formula: Performance = (ICT * Total Production) / Uptime
+        # PERFORMANCE: 0–1 (can be >1 if ICT is wrong, so clamp later)
         if uptime_s > 0 and ideal_cycle_time > 0:
-            performance = (ideal_cycle_time * prod_delta) / uptime_s  # unitless
+            performance_raw = (ideal_cycle_time * prod_delta) / uptime_s
         else:
-            performance = 0.0
+            performance_raw = 0.0
 
-        # OEE: ratio 0–1
-        oee = availability * performance * quality
+        def clamp01(x: float) -> float:
+            return max(0.0, min(1.0, x))
 
-        # ---- Store attributes (raw ratios + config) ----
-        updated_attributes["ideal_cycle_time"] = ideal_cycle_time      # [s/part]
-        updated_attributes["availability"] = availability              # 0–1
-        updated_attributes["performance"] = performance                # 0–1
-        updated_attributes["oee"] = oee                                # 0–1
+        availability_raw = clamp01(availability_raw)
+        performance_raw  = clamp01(performance_raw)
+        quality_raw      = clamp01(quality_raw)
 
-        updated_attributes["bad_qty_pcs"] = bad_total_attr             # [pcs]
+        # OEE raw ratio 0–1
+        oee_raw = availability_raw * performance_raw * quality_raw
 
-        # ---- Store telemetry (counts + % for dashboards) ----
-        updated_telemetry["bad_qty_pcs"] = bad_total_attr              # [pcs]
-        updated_telemetry["good_qty_pcs"] = good_total                 # [pcs]
+        # ---- Convert to % with 2 decimals ----
+        availability_pct = round(availability_raw * 100, 2)
+        performance_pct  = round(performance_raw * 100, 2)
+        quality_pct      = round(quality_raw * 100, 2)
+        oee_pct          = round(oee_raw * 100, 2)
+        
+        # Performance rate (parts/hour)
+        if prod_delta is None or uptime_s is None:
+            parts_per_hour = 0
+        elif prod_delta <= 0 or uptime_s <= 0:
+            # bad or meaningless window, treat as 0 rate
+            parts_per_hour = 0
+        else:
+            parts_per_hour = 3600 * prod_delta / uptime_s
+        
+        updated_attributes["parts_per_hour"] = parts_per_hour
+        updated_telemetry["parts_per_hour"] = parts_per_hour
 
-        updated_telemetry["quality_pct"] = round(quality * 100, 2)         # %
-        updated_telemetry["availability_pct"] = round(availability * 100, 2)  # %
-        updated_telemetry["performance_pct"] = round(performance * 100, 2)    # %
-        updated_telemetry["oee_pct"] = round(oee * 100, 2)                   # %
+        # ---- Store attributes (percent values, ready for display) ----
+        updated_attributes["ideal_cycle_time"] = ideal_cycle_time        # [s/part]
+
+        updated_attributes["availability_pct"] = availability_pct        # %
+        updated_attributes["performance_pct"]  = performance_pct         # %
+        updated_attributes["quality_pct"]      = quality_pct             # %
+        updated_attributes["oee_pct"]          = oee_pct                 # %
+
+        # (optional: keep raw ratios too if you ever need them for math)
+        updated_attributes["availability"] = availability_raw            # 0–1
+        updated_attributes["performance"]  = performance_raw             # 0–1
+        updated_attributes["quality"]      = quality_raw                 # 0–1
+        updated_attributes["oee"]          = oee_raw                     # 0–1
+
+        updated_attributes["bad_qty_pcs"] = bad_total_attr               # [pcs]
+
+        # ---- Store telemetry (also as %) ----
+        updated_telemetry["bad_qty_pcs"] = bad_total_attr                # [pcs]
+        updated_telemetry["good_qty_pcs"] = good_total                   # [pcs]
+
+        updated_telemetry["quality_pct"] = quality_pct
+        updated_telemetry["availability_pct"] = availability_pct
+        updated_telemetry["performance_pct"] = performance_pct
+        updated_telemetry["oee_pct"] = oee_pct
 
         # <------------- ADD-ONS ------------->
 

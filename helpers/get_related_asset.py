@@ -2,6 +2,7 @@
 import os
 from dotenv import load_dotenv
 from modules.tb_http import tb_post
+from services.logger import logger as log
 
 load_dotenv()
 # Module specific imports
@@ -35,10 +36,15 @@ async def find_related_entity(device_id: str):
         ]
     )
     
-    
+    log.debug(f"Query body: \n {Query.model_dump()}")
     raw = await tb_post(path="/api/relations", json_body=Query)
     if not raw:
         return None
     else:
-        asset_id = raw[0]["to"]["id"]
-        return asset_id
+        asset_list: list = []
+        
+        for obj in raw:
+            id = obj["to"]["id"]
+            asset_list.append(id)
+        
+        return asset_list

@@ -17,8 +17,14 @@ async def post_telemetry(telemetry: dict, access_token: str) -> None:
     base_url = os.getenv("TB_URL")
     url = f"{base_url}/api/v1/{access_token}/telemetry"
 
+    ts_seconds = telemetry.get("timestamp")
+    if ts_seconds is None:
+        ts_ms = int(time.time() * 1000)
+    else:
+        ts_ms = int(float(ts_seconds) * 1000)
+
     payload = {
-        "ts": int(time.time() * 1000),
+        "ts": ts_ms,
         "values": telemetry,
     }
 

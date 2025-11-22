@@ -39,9 +39,7 @@ JOB_ATTR_KEYS.extend(
     ]
 )
 
-# still in modules/jobcard_attrs.py
-
-async def get_jobcard_attrs(asset_id: str) -> Any:
+async def get_jobcard_attr(asset_id: str) -> Any:
     """
     Raw TB response for server-scope attributes of this asset,
     restricted to JOB_ATTR_KEYS.

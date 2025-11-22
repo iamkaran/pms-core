@@ -1,6 +1,7 @@
 from modules.tb_http import tb_get, tb_post
 import time
 from services.logger import logger as log
+import asyncio
 
 async def send_jobcard_updates(asset_id: str, attrs: dict, tel: dict):
     '''Send the updated attributes and telemetry to Thingsboard'''
@@ -9,14 +10,14 @@ async def send_jobcard_updates(asset_id: str, attrs: dict, tel: dict):
     log.debug(f"attributes: {attrs}")
     log.debug(f"telemetry: {tel}")
     
+    tasks = []
+
     if attrs:
-        resp = await tb_post(
+        tasks.append(tb_post(
             path=f"/api/plugins/telemetry/ASSET/{asset_id}/SERVER_SCOPE",
             json_body=attrs
-        )
+        ))
         
-        print(resp)
-    
     if tel:
         ts_ms = int(tel.get("timestamp") or time.time() * 1000)
         
@@ -27,7 +28,10 @@ async def send_jobcard_updates(asset_id: str, attrs: dict, tel: dict):
             "values":values
         }
         
-        resp = await tb_post(
+        tasks.append(tb_post(
             path=f"/api/plugins/telemetry/ASSET/{asset_id}/timeseries/ANY_SCOPE",
             json_body=body
-        )
+        ))
+
+    if tasks:
+        await asyncio.gather(*tasks)

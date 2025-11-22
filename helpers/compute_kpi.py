@@ -27,7 +27,8 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
     for i in range(1, CHANNEL_COUNT+1):
         curOcc[str(i)] = int(telemetry.get(f"OCCURRENCE_{i}") or 0)
         curDur[str(i)] = int(telemetry.get(f"DURATION_{i}") or 0)
-    
+    log.info(curOcc)
+    log.info(curDur)
     curOccTotal = sum(curOcc.values())
     curDurTotal = sum(curDur.values())
     
@@ -122,7 +123,8 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
         for i in range(1, CHANNEL_COUNT+1):
             actOcc[f"act_occ_{i}"] = max(0, curOcc[str(i)] - baseOcc[str(i)])
             actDur[f"act_duration_s_{i}"] = max(0, curDur[str(i)] - baseDur[str(i)])
-        
+        log.info(f"Actual Occ: {actOcc}")
+        log.info(f"Actual Dur: {actDur}")
         act_occ_total = sum(actOcc.values())
         downtime_s = sum(actDur.values())
         uptime_s = max(0, runtime_s - downtime_s)

@@ -14,19 +14,19 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
     CHANNEL_COUNT = 0
     
     for key in telemetry:
-        if "OCCURRENCE-" in key:
+        if "OCCURRENCE_" in key:
             CHANNEL_COUNT += 1
     log.debug(f"Channel count: {CHANNEL_COUNT}")
     
     # Read the current counters
     
-    curProd: int = int(telemetry["PRODUCTION-COUNT"])
+    curProd: int = int(telemetry["PRODUCTION_COUNT"])
     curOcc: Dict[str, int] = {}
     curDur: Dict[str, float] = {}
     
     for i in range(1, CHANNEL_COUNT+1):
-        curOcc[str(i)] = int(telemetry.get(f"OCCURRENCE-{i}") or 0)
-        curDur[str(i)] = int(telemetry.get(f"DURATION-{i}") or 0)
+        curOcc[str(i)] = int(telemetry.get(f"OCCURRENCE_{i}") or 0)
+        curDur[str(i)] = int(telemetry.get(f"DURATION_{i}") or 0)
     
     curOccTotal = sum(curOcc.values())
     curDurTotal = sum(curDur.values())

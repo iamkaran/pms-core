@@ -16,7 +16,9 @@ JOB_ATTR_KEYS: List[str] = [
     "baseline_prod_count_pcs",
     "baseline_occ_total",
     "baseline_duration_ms",
-    "baseline_bad_qty_pcs"
+    "baseline_bad_qty_pcs",
+    "baseline_machine_bad_prod_count_pcs",
+    "baseline_user_bad_prod_count_pcs",
 ]
 
 # baseline per-channel (1..10)

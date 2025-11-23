@@ -35,7 +35,11 @@ JOB_ATTR_KEYS.extend(
         "active_status_cur",
         "status_code_cur",
         "status_label",
-        "bad_qty_pcs"
+        "bad_qty_pcs",
+        
+        "user_bad_prod_count_pcs",
+        "machine_bad_prod_count_pcs",
+        "bad_production_switch"
     ]
 )
 

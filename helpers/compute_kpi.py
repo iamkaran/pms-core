@@ -96,11 +96,35 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
         updated_telemetry["achieved_pct"] = 0
         updated_telemetry["active_status"] = telemetry["active_status"]
         
+        # Extras
+        
+        updated_attributes["baseline_machine_bad_prod_count_pcs"] = int(telemetry.get("BAD_PRODUCTION_COUNT") or 0)
+        updated_attributes["baseline_user_bad_prod_count_pcs"] = int(attributes.get("user_bad_prod_count_pcs") or 0)
+        raw_switch = attributes.get("bad_production_switch")
+        switch = 2 if raw_switch is None else int(raw_switch)
+        updated_attributes["bad_production_switch"] = switch
+
+        updated_telemetry["bad_qty_pcs"] = 0
+        updated_telemetry["machine_bad_qty_pcs"] = 0
+        updated_telemetry["user_bad_qty_pcs"] = 0
+
+
         
     # <--Normal Mode-->
     else:
         
         # <--ATTRIBUTES-->
+        
+        # Extras
+        machine_bad_raw = int(telemetry.get("BAD_PRODUCTION_COUNT") or 0)
+        user_bad_raw = int(attributes.get("user_bad_prod_count_pcs") or 0)
+        raw_switch = attributes.get("bad_production_switch")
+        switch = 2 if raw_switch is None else int(raw_switch)
+        baseline_machine = int(attributes.get("baseline_machine_bad_prod_count_pcs") or 0)
+        
+        machine_bad = max(0, machine_bad_raw - baseline_machine)
+        user_bad = max(0, user_bad_raw)  # user value is already absolute
+
         
         # Fetch the baselines
         updated_attributes["job_status"] = attributes.get("job_status", "unknown")
@@ -151,11 +175,35 @@ def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
         updated_telemetry["active_status"] = telemetry["active_status"]
         
         # <------------- ADD-ONS ------------->
+        
+        # 1. Bad Production
+        
+        if switch == 1:
+            bad_total = machine_bad
+        elif switch == 0:
+            bad_total = user_bad
+        elif switch == 2:
+            bad_total = machine_bad + user_bad
+        else:
+            bad_total = user_bad
+        bad_total = max(0, min(bad_total, prod_delta))
+        good_total = max(0, prod_delta - bad_total)
+        
+        updated_attributes["bad_qty_pcs"] = bad_total
+        updated_attributes["machine_bad_prod_count_pcs"] = machine_bad_raw
+        updated_attributes["user_bad_prod_count_pcs"] = user_bad_raw
+        updated_attributes["bad_production_switch"] = switch
 
-        # 1. OEE Calculations
+        updated_telemetry["bad_qty_pcs"] = bad_total
+        updated_telemetry["machine_bad_qty_pcs"] = machine_bad
+        updated_telemetry["user_bad_qty_pcs"] = user_bad
+        updated_telemetry["good_qty_pcs"] = good_total
 
-        bad_total_attr = max(0, attributes.get("bad_qty_pcs", 0))   # [pcs]
-        good_total = max(0, prod_delta - bad_total_attr)            # [pcs]
+        
+        # 2. OEE Calculations
+
+        bad_total_attr = bad_total   # from the switch logic above
+        good_total = good_total      # already clamped
 
         # Ideal cycle time [s/part] (default 60 s/part if not configured)
         ideal_cycle_time = float(attributes.get("ideal_cycle_time", 60))

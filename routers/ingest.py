@@ -42,6 +42,7 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
                 try:
                     attr = await get_jobcard_attr(asset_id=asset_id)
                     prev_status = attr.get("job_status")
+                    log.info(f"Fetched attributes: {attr}")
                     job_status = get_job_status(telemetry=telemetry, attribute=attr)
                     attr["job_status"] = job_status
                     log.debug(f"Retrieved Job card attributes: {attr}")

@@ -1,21 +1,27 @@
 from typing import Dict, Any
 import math
+import re
 from services.logger import logger as log
 
-def compute_job_actuals(telemetry: Dict[str, Any], attributes: Dict[str, Any]):
+def compute_job_actuals(telemetry_origin: Dict[str, Any], attributes: Dict[str, Any]):
     '''Computes actuals and also sets baselines'''
     
     # <--Build Common Inputs-->
-    
+    telemetry: Dict[str, Any] = {}
     updated_attributes: Dict[str, Any] = {}
     updated_telemetry: Dict[str, Any] = {}
     
     # Find the channel count (value of k in OCCURRENCE-1 --> OCCURRENCE-k)
     CHANNEL_COUNT = 0
+    regex_pattern = re.compile(r"^(M\d{2}_)")
     
-    for key in telemetry:
+    for key, value in telemetry_origin.items():
+        regex_match = regex_pattern.match(key)
+        if regex_match:
+            key = key.replace(regex_match.group(1), "")
         if "OCCURRENCE_" in key:
             CHANNEL_COUNT += 1
+        telemetry[key] = value
     log.debug(f"Channel count: {CHANNEL_COUNT}")
     
     # Read the current counters

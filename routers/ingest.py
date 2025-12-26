@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Body, HTTPException
 import time
+import re
 from services.logger import logger as log
 from helpers.post_data import post_telemetry, TelemetrySendError
 from helpers.get_related_asset import find_related_entity
@@ -78,6 +79,11 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
     # Always send telemetry upstream
     try:
         log.info("Posting Telemetry...")
+        regex_pattern = re.compile(r"^(M\d{2}_)")
+        for key, value in telemetry.items():
+            regex_match = regex_pattern.match(key)
+            if regex_match:
+                key = key.replace(regex_match.group(1), "")
         await post_telemetry(telemetry=telemetry, access_token=ACCESS_TOKEN)
         
     except TelemetrySendError as e:

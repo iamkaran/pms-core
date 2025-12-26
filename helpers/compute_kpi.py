@@ -7,6 +7,7 @@ def compute_job_actuals(telemetry_origin: Dict[str, Any], attributes: Dict[str, 
     '''Computes actuals and also sets baselines'''
     
     # <--Build Common Inputs-->
+    
     telemetry: Dict[str, Any] = {}
     updated_attributes: Dict[str, Any] = {}
     updated_telemetry: Dict[str, Any] = {}

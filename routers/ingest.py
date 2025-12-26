@@ -53,7 +53,7 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
                         log.info(f"ACTIVE_JOB asset for {DEVICE_UUID}: {asset_id}")
                         # attr is already fetched above
                         updated_attributes, updated_telemetry = compute_job_actuals(
-                            telemetry=telemetry,
+                            telemetry_origin=telemetry,
                             attributes=attr,
                         )
                         timestamp = telemetry.get(f"timestamp")
@@ -80,12 +80,12 @@ async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dic
     try:
         log.info("Posting Telemetry...")
         regex_pattern = re.compile(r"^(M\d{2}_)")
+        cleaned = {}
         for key, value in telemetry.items():
-            regex_match = regex_pattern.match(key)
-            if regex_match:
-                key = key.replace(regex_match.group(1), "")
-        await post_telemetry(telemetry=telemetry, access_token=ACCESS_TOKEN)
-        
+            m = regex_pattern.match(key)
+            clean_key = key.replace(m.group(1), "") if m else key
+            cleaned[clean_key] = value
+        await post_telemetry(telemetry=cleaned, access_token=ACCESS_TOKEN)
     except TelemetrySendError as e:
         log.error("Telemetry sending failed: %s", e)
         raise HTTPException(status_code=502, detail=str(e))

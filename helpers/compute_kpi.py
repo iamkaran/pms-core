@@ -14,6 +14,8 @@ def compute_job_actuals(telemetry_origin: Dict[str, Any], attributes: Dict[str, 
     
     # Find the channel count (value of k in OCCURRENCE-1 --> OCCURRENCE-k)
     CHANNEL_COUNT = 0
+    
+    # Pattern to catch any "M03_" prefixes in datakeys
     regex_pattern = re.compile(r"^(M\d{2}_)")
     
     for key, value in telemetry_origin.items():

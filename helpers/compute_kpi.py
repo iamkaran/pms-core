@@ -154,8 +154,14 @@ def compute_job_actuals(telemetry_origin: Dict[str, Any], attributes: Dict[str, 
         prod_delta = max(0, curProd - baseProd)
         
         for i in range(1, CHANNEL_COUNT+1):
-            actOcc[f"act_occ_{i}"] = max(0, curOcc[str(i)] - baseOcc[str(i)])
-            actDur[f"act_duration_s_{i}"] = max(0, curDur[str(i)] - baseDur[str(i)])
+            occ_delta = max(0, curOcc[str(i)] - baseOcc[str(i)])
+            dur_delta = max(0, curDur[str(i)] - baseDur[str(i)])
+            # If duration rose but occurrence stayed flat, the alarm likely pre-dated the job;
+            # credit a single occurrence so duration has a source.
+            if occ_delta == 0 and dur_delta > 0:
+                occ_delta = 1
+            actOcc[f"act_occ_{i}"] = occ_delta
+            actDur[f"act_duration_s_{i}"] = dur_delta
         log.info(f"Actual Occ: {actOcc}")
         log.info(f"Actual Dur: {actDur}")
         act_occ_total = sum(actOcc.values())

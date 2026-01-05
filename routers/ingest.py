@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.post("/api/telemetry/{ACCESS_TOKEN}/{DEVICE_UUID}")
 async def ingest(ACCESS_TOKEN: str, DEVICE_UUID: str, telemetry = Body()) -> dict:
-    """Main Process that handles every tick."""
+    """Main Process tht handles every tick."""
     start = time.time() 
 
     # Optional: grab machine name for logging

@@ -42,8 +42,10 @@ def compute_job_actuals(telemetry_origin: Dict[str, Any], attributes: Dict[str, 
     curDurTotal = sum(curDur.values())
     
     # Time & Target
-    
-    ts_ms = telemetry["timestamp"] * 1000
+    if len(str(telemetry["timestamp"])) >= 13:
+        ts_ms = telemetry["timestamp"]
+    else:
+        ts_ms = int(telemetry["timestamp"]) * 1000
     start_ms = attributes["cfg_start_ts"]
     shift_hours = attributes["cfg_shift_hours"]
     

@@ -51,29 +51,6 @@ The ingestion API expects data in the following format. This schema is critical 
     {"DURATION_9": "26333"},
     {"DURATION_10": "1221"},
     {"PRODUCTION_COUNT": "17875"},
-    {"active_status": "11"},
-    {"OCCURRENCE_1": "24"},
-    {"OCCURRENCE_2": "4"},
-    {"OCCURRENCE_3": "15"},
-    {"OCCURRENCE_4": "16"},
-    {"OCCURRENCE_5": "20"},
-    {"OCCURRENCE_6": "2"},
-    {"OCCURRENCE_7": "4"},
-    {"OCCURRENCE_8": "7"},
-    {"OCCURRENCE_9": "16"},
-    {"OCCURRENCE_10": "7"},
-    {"DURATION_1": "1734"},
-    {"DURATION_2": "199473"},
-    {"DURATION_3": "10295"},
-    {"DURATION_4": "12430"},
-    {"DURATION_5": "20345"},
-    {"DURATION_6": "61"},
-    {"DURATION_7": "65"},
-    {"DURATION_8": "6841"},
-    {"DURATION_9": "26333"},
-    {"DURATION_10": "1221"},
-    {"PRODUCTION_COUNT": "17875"},
-    {"active_status": "11"},
     {"timestamp": 1763829434}
   ]
 }
@@ -81,3 +58,4 @@ The ingestion API expects data in the following format. This schema is critical 
 
 ## BUGS/SECURITY FLAWS:
 - USAGE OF ACCESS TOKEN IN THE ENDPOINT URL
+
